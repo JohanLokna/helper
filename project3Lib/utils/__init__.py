@@ -1,1 +1,1 @@
-from dice import *
+from .dice import *
