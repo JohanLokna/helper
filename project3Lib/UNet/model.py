@@ -3,6 +3,7 @@
 from torch import nn
 from torch import optim
 from tqdm.auto import tqdm
+import torch.nn.functional as F
 
 from .utils import *
 from ..utils import dice_loss
@@ -82,23 +83,49 @@ class UNet(nn.Module):
             scheduler.step(val_loss)
 
     
-    def train_semisupervised_model(self, train_dataset, val_dataset, unlabeled_dataset, epochs=10, alpha = 1.0, lr = 1e-5):
+    def train_semisupervised_model(self, train_dataset, val_dataset, unlabeled_dataset, epochs=10, alpha = 1.0, lr = 1e-5, beta = 1.0, sigma=0.05):
 
         optimizer = optim.RMSprop(self.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
         grad_scaler = torch.cuda.amp.GradScaler(enabled=False)
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=2)
 
-        # Loss function
+        # Supervised loss is weighted average of CE between predicatons and target as well as dice score
         criterion = nn.BCELoss()
         supervised_loss_function = lambda pred, target: alpha * criterion(pred.flatten(), target.flatten()) + \
                                                         (1 - alpha) * dice_loss(pred, target.unsqueeze(0), multiclass=False)
 
+        # Unsupervised loss is CE of predictions
+        # Scale so that only beta regulate weighting between supervised and unsupervised loss
+        scale = beta * len(train_dataset) / len(unlabeled_dataset)
+        unlabeled_loss_function  = lambda pred_noise, pred_base: scale * F.cross_entropy(
+              torch.stack([pred_noise.flatten(), 1 - pred_noise.flatten()], dim=1), 
+              torch.stack([pred_base.flatten(), 1 - pred_base.flatten()], dim=1)
+          )
 
         loop = tqdm(range(epochs))
         for _ in loop:
-            for x, target, _ in train_dataset:
-                loss = loss_function(self(x), target)
+            for i, (x, target, _) in enumerate(train_dataset):
 
+                # Use one supervised datapoint
+                loss = supervised_loss_function(self(x), target)
+
+            
+                # Then iterate over unsupervised examples 
+                for x_unlabeld, _, _ in list(unlabeled_dataset)[i::len(train_dataset)]:
+
+                    # Base prediction is unperterbed
+                    pred_base = self(x_unlabeld)
+
+                    # Then induce gaussian noise
+                    noise = torch.empty_like(x_unlabeld)
+                    noise.normal_(0, sigma).mean()
+                    x_noisy = (x_unlabeld + noise).clip(min=0, max=1)
+                    pred_noise = self(x_noisy)
+
+                    # Compute consistency loss
+                    loss += unlabeled_loss_function(pred_noise, pred_base)
+                
+                # Then optimize
                 optimizer.zero_grad(set_to_none=True)
                 grad_scaler.scale(loss).backward()
                 grad_scaler.step(optimizer)
@@ -107,7 +134,7 @@ class UNet(nn.Module):
             # Validation Loop
             with torch.no_grad():
                 for x, target, _ in val_dataset:
-                    val_loss = loss_function(self(x), target)
+                    val_loss = supervised_loss_function(self(x), target)
 
                 loop.set_description("Loss : {}".format(val_loss.item()))
 
