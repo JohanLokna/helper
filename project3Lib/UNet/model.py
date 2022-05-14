@@ -51,20 +51,21 @@ class UNet(nn.Module):
         self.gradients = grads
 
     
-    def train_model(self, train_dataset, val_dataset, epochs=10, alpha = 0.5):
+    def train_model(self, train_dataset, val_dataset, epochs=10, alpha = 1.0, lr = 1e-5):
 
-        optimizer = optim.RMSprop(self.parameters(), lr=1e-5, weight_decay=1e-8, momentum=0.9)
-        # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=2)
+        optimizer = optim.RMSprop(self.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
         grad_scaler = torch.cuda.amp.GradScaler(enabled=False)
         criterion = nn.BCELoss()
+
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=2)
 
         for _ in tqdm(range(epochs)):
             for x, target, _ in train_dataset:
 
                 pred = self(x)
 
-                loss = criterion(pred.flatten(), target.flatten())
-                loss += alpha * dice_loss(
+                loss = alpha * criterion(pred.flatten(), target.flatten())
+                loss += (1 - alpha) * dice_loss(
                     pred,
                     target.unsqueeze(0),
                     multiclass=False
