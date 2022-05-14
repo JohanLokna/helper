@@ -56,29 +56,27 @@ class UNet(nn.Module):
         optimizer = optim.RMSprop(self.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
         grad_scaler = torch.cuda.amp.GradScaler(enabled=False)
         criterion = nn.BCELoss()
+        loss_function = lambda pred, target: alpha * criterion(pred.flatten(), target.flatten()) + \
+                                             (1 - alpha) * dice_loss(pred, target.unsqueeze(0), multiclass=False)
 
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=2)
 
         loop = tqdm(range(epochs))
         for _ in loop:
             for x, target, _ in train_dataset:
-
-                pred = self(x)
-
-                loss = alpha * criterion(pred.flatten(), target.flatten())
-                loss += (1 - alpha) * dice_loss(
-                    pred,
-                    target.unsqueeze(0),
-                    multiclass=False
-                )
+                loss = loss_function(self(x), target)
 
                 optimizer.zero_grad(set_to_none=True)
                 grad_scaler.scale(loss).backward()
                 grad_scaler.step(optimizer)
                 grad_scaler.update()
 
-            loop.set_description("Loss : {}".format(loss.item()))
+            # Validation Loop
+            with torch.no_grad():
+                for x, target, _ in val_dataset:
+                    val_loss = loss_function(self(x), target)
 
-                
-            # scheduler.step()
+                loop.set_description("Loss : {}".format(val_loss.item()))
+
+            scheduler.step(val_loss)
     
