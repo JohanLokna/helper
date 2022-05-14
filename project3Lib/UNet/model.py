@@ -51,15 +51,48 @@ class UNet(nn.Module):
         self.gradients = grads
 
     
-    def train_model(self, train_dataset, val_dataset, epochs=10, alpha = 1.0, lr = 1e-5):
+    def train_supervised_model(self, train_dataset, val_dataset, epochs=10, alpha = 1.0, lr = 1e-5):
 
         optimizer = optim.RMSprop(self.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
         grad_scaler = torch.cuda.amp.GradScaler(enabled=False)
-        criterion = nn.BCELoss()
-        loss_function = lambda pred, target: alpha * criterion(pred.flatten(), target.flatten()) + \
-                                             (1 - alpha) * dice_loss(pred, target.unsqueeze(0), multiclass=False)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=2)
 
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=2)
+        # Loss function
+        criterion = nn.BCELoss()
+        loss_f = lambda pred, target: alpha * criterion(pred.flatten(), target.flatten()) + \
+                                      (1 - alpha) * dice_loss(pred, target.unsqueeze(0), multiclass=False)
+
+        loop = tqdm(range(epochs))
+        for _ in loop:
+            for x, target, _ in train_dataset:
+                loss = loss_f(self(x), target)
+
+                optimizer.zero_grad(set_to_none=True)
+                grad_scaler.scale(loss).backward()
+                grad_scaler.step(optimizer)
+                grad_scaler.update()
+
+            # Validation Loop
+            with torch.no_grad():
+                for x, target, _ in val_dataset:
+                    val_loss = loss_f(self(x), target)
+
+                loop.set_description("Loss : {}".format(val_loss.item()))
+
+            scheduler.step(val_loss)
+
+    
+    def train_semisupervised_model(self, train_dataset, val_dataset, unlabeled_dataset, epochs=10, alpha = 1.0, lr = 1e-5):
+
+        optimizer = optim.RMSprop(self.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
+        grad_scaler = torch.cuda.amp.GradScaler(enabled=False)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=2)
+
+        # Loss function
+        criterion = nn.BCELoss()
+        supervised_loss_function = lambda pred, target: alpha * criterion(pred.flatten(), target.flatten()) + \
+                                                        (1 - alpha) * dice_loss(pred, target.unsqueeze(0), multiclass=False)
+
 
         loop = tqdm(range(epochs))
         for _ in loop:
