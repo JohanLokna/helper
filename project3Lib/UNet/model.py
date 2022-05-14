@@ -53,7 +53,7 @@ class UNet(nn.Module):
     def train(self, train_dataset, val_dataset, epochs=10):
 
         optimizer = optim.RMSprop(self.parameters(), lr=1e-5, weight_decay=1e-8, momentum=0.9)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=2)
+        # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=2)
         grad_scaler = torch.cuda.amp.GradScaler(enabled=False)
         criterion = nn.BCELoss()
 
@@ -69,5 +69,5 @@ class UNet(nn.Module):
                 grad_scaler.step(optimizer)
                 grad_scaler.update()
                 
-            scheduler.step()
+            # scheduler.step()
     
