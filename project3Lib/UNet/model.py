@@ -59,7 +59,8 @@ class UNet(nn.Module):
 
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=2)
 
-        for _ in tqdm(range(epochs)):
+        loop = tqdm(range(epochs))
+        for _ in loop:
             for x, target, _ in train_dataset:
 
                 pred = self(x)
@@ -75,6 +76,9 @@ class UNet(nn.Module):
                 grad_scaler.scale(loss).backward()
                 grad_scaler.step(optimizer)
                 grad_scaler.update()
+
+            loop.set_description("Loss : {}".format(loss.item()))
+
                 
             # scheduler.step()
     
