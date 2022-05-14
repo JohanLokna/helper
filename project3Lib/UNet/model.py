@@ -5,6 +5,7 @@ from torch import optim
 from tqdm.auto import tqdm
 
 from .utils import *
+from ..utils import dice_loss
 
 class UNet(nn.Module):
     def __init__(self, n_channels, n_classes, bilinear=False):
@@ -50,7 +51,7 @@ class UNet(nn.Module):
         self.gradients = grads
 
     
-    def train(self, train_dataset, val_dataset, epochs=10):
+    def train_model(self, train_dataset, val_dataset, epochs=10, alpha = 0.5):
 
         optimizer = optim.RMSprop(self.parameters(), lr=1e-5, weight_decay=1e-8, momentum=0.9)
         # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=2)
@@ -62,7 +63,12 @@ class UNet(nn.Module):
 
                 pred = self(x)
 
-                loss = criterion(pred.flatten(), target.flatten()) 
+                loss = criterion(pred.flatten(), target.flatten())
+                loss += alpha * dice_loss(
+                    pred,
+                    target.unsqueeze(0),
+                    multiclass=False
+                )
 
                 optimizer.zero_grad(set_to_none=True)
                 grad_scaler.scale(loss).backward()
