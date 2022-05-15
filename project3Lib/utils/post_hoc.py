@@ -35,7 +35,10 @@ save_name = ""            : will save images to files if file name is given -- o
 def plot_grads(data, model,  idx=1, grad_type= "integ_grads" ,plot=True, layer=None,layer_idx=-1,  save_name=""):
 
     
-    sample = data[0].unsqueeze(0)
+    if(len(data[0].shape)<=3):
+        sample = data[0].unsqueeze(0)
+    else:
+        sample = data[0]
     #sample.requires_grad = True
     sample_class = data[1]
 
