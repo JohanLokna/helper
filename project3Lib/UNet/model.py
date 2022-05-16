@@ -44,7 +44,7 @@ class UNet(nn.Module):
         return self.sigmoid(logits)
 
     
-    def train_supervised_model(self, train_dataset, val_dataset, epochs=10, alpha = 1.0, lr = 1e-5):
+    def train_supervised(self, train_dataset, val_dataset, epochs=10, alpha = 1.0, lr = 1e-5):
 
         optimizer = optim.RMSprop(self.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
         grad_scaler = torch.cuda.amp.GradScaler(enabled=False)
@@ -70,7 +70,7 @@ class UNet(nn.Module):
             scheduler.step(val_loss)
 
     
-    def train_semisupervised_model(self, train_dataset, val_dataset, unlabeled_dataset, epochs=10, alpha = 1.0, lr = 1e-5, beta = 1.0, sigma=0.05):
+    def train_semisupervised(self, train_dataset, val_dataset, unlabeled_dataset, epochs=10, alpha = 1.0, lr = 1e-5, beta = 1.0, sigma=0.05):
 
         optimizer = optim.RMSprop(self.parameters(), lr=lr, weight_decay=1e-8, momentum=0.9)
         grad_scaler = torch.cuda.amp.GradScaler(enabled=False)
