@@ -65,12 +65,7 @@ class UNet(nn.Module):
                 grad_scaler.step(optimizer)
                 grad_scaler.update()
 
-            # Validation Loop
-            with torch.no_grad():
-                for x, target, _ in val_dataset:
-                    val_loss = loss_f(self(x), target)
-
-                loop.set_description("Loss : {}".format(val_loss.item()))
+            val_loss = self.validate_step(loop, val_dataset, loss_f)
 
             scheduler.step(val_loss)
 
@@ -123,15 +118,21 @@ class UNet(nn.Module):
                 grad_scaler.step(optimizer)
                 grad_scaler.update()
 
-            # Validation Loop
-            with torch.no_grad():
-                val_loss, val_dice = torch.zeros_like(loss), torch.zeros_like(loss)
-                for x, target, _ in val_dataset:
-                    pred = self(x)
-                    val_loss += supervised_loss_function(pred, target)
-                    val_dice += 1 - dice_loss(pred, target.unsqueeze(0))
-
-                loop.set_description("Loss : {:.2f} | Dice : {:.2f}".format(val_loss.item() / len(val_dataset), val_dice.item() / len(val_dataset)))
+            val_loss = self.validate_step(loop, val_dataset, supervised_loss_function)
 
             scheduler.step(val_loss)
+
+    def validate_step(self, loop, val_dataset, loss_function):
+        
+        # Validation Loop
+        with torch.no_grad():
+            val_loss, val_dice = 0, 0
+            for x, target, _ in val_dataset:
+                pred = self(x)
+                val_loss += loss_function(pred, target)
+                val_dice += 1 - dice_loss(pred, target.unsqueeze(0))
+
+            loop.set_description("Loss : {:.2f} | Dice : {:.2f}".format(val_loss.item() / len(val_dataset), val_dice.item() / len(val_dataset)))
+        
+        return val_loss
     
