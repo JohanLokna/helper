@@ -125,11 +125,13 @@ class UNet(nn.Module):
 
             # Validation Loop
             with torch.no_grad():
-                val_loss = torch.zeros_like(loss)
+                val_loss, val_dice = torch.zeros_like(loss), torch.zeros_like(loss)
                 for x, target, _ in val_dataset:
-                    val_loss += supervised_loss_function(self(x), target)
+                    pred = self(x)
+                    val_loss += supervised_loss_function(pred, target)
+                    val_dice += 1 - dice_loss(pred, target.unsqueeze(0))
 
-                loop.set_description("Loss : {}".format(val_loss.item()))
+                loop.set_description("Loss : {:.2f} | Dice : {:.2f}".format(val_loss.item() / len(val_dataset), val_dice.item() / len(val_dataset)))
 
             scheduler.step(val_loss)
     
