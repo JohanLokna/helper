@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 import torch.nn.functional as F
 
 from .utils import *
-from ..utils import dice_loss
+from ..utils import dice_loss, dice_coeff
 
 class UNet(nn.Module):
     def __init__(self, n_channels, n_classes, bilinear=False):
@@ -29,16 +29,12 @@ class UNet(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
 
-    def forward(self, x, use_gradcam=False):
+    def forward(self, x):
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
         x4 = self.down3(x3)
         x5 = self.down4(x4)
-
-        if use_gradcam:
-            self.activations = x3.detach()
-            x3.register_hook(self.activations_hook)
 
         x = self.up1(x5, x4)
         x = self.up2(x, x3)
@@ -46,10 +42,6 @@ class UNet(nn.Module):
         x = self.up4(x, x1)
         logits = self.outc(x)
         return self.sigmoid(logits)
-        
-
-    def activations_hook(self, grads):
-        self.gradients = grads
 
     
     def train_supervised_model(self, train_dataset, val_dataset, epochs=10, alpha = 1.0, lr = 1e-5):
@@ -92,7 +84,7 @@ class UNet(nn.Module):
         # Supervised loss is weighted average of CE between predicatons and target as well as dice score
         criterion = nn.BCELoss()
         supervised_loss_function = lambda pred, target: alpha * criterion(pred.flatten(), target.flatten()) + \
-                                                        (1 - alpha) * dice_loss(pred, target.unsqueeze(0), multiclass=False)
+                                                        (1 - alpha) * dice_loss(pred, target.unsqueeze(0))
 
         # Unsupervised loss is CE of predictions
         # Scale so that only beta regulate weighting between supervised and unsupervised loss
@@ -133,8 +125,9 @@ class UNet(nn.Module):
 
             # Validation Loop
             with torch.no_grad():
+                val_loss = torch.zeros_like(loss)
                 for x, target, _ in val_dataset:
-                    val_loss = supervised_loss_function(self(x), target)
+                    val_loss += supervised_loss_function(self(x), target)
 
                 loop.set_description("Loss : {}".format(val_loss.item()))
 
