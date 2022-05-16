@@ -8,7 +8,11 @@ class MaxClassifier(nn.Module):
         self.model = model
         self.threshold = None
 
-    def fit(self, sample, label):
+    def fit(self, train_dataset):
+
+        sample = torch.concat([x for x, _, _ in train_dataset])
+        label = torch.BoolTensor([label for x, _, label in train_dataset]).to(device=sample.device)
+
         thresholds = torch.arange(0.5, 1, 0.025).to(device=sample.device)
         scores = torch.empty_like(thresholds)
 
