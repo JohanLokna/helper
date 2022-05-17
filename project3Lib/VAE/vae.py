@@ -9,6 +9,7 @@ import torch.distributions
 import torchvision
 import numpy as np
 import matplotlib.pyplot as plt
+import tqdm
 
 import random
 random.seed(0)
@@ -21,7 +22,7 @@ device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 # ------ ENCODER MODULE
 
 class VariationalEncoder(nn.Module):
-    def __init__(self, imgChannels=3, f_dim=1024, z_dim=540):
+    def __init__(self, imgChannels=1, f_dim=1024, z_dim=540):
         
         super(VariationalEncoder, self).__init__()
         
@@ -159,7 +160,7 @@ def plot_latent(autoencoder, data, num_batches=20):
 
 
 
-def plot_reconstructed(autoencoder, dataloader, r0=(-10, 10), r1=(-10, 10), dims=(0,1), n=15):
+def plot_reconstructed(autoencoder, dataloader, r0=(-10, 10), r1=(-10, 10), dims=(0,1), n=15, nChannels=3):
     w = 128
     img = np.zeros((n*w, n*w))
     
@@ -172,7 +173,11 @@ def plot_reconstructed(autoencoder, dataloader, r0=(-10, 10), r1=(-10, 10), dims
             start_embed[:,dims[1]] = start_embed[:,dims[1]] + x
             z = start_embed
             x_hat = autoencoder.decoder(z)
-            x_hat = x_hat.reshape(3,128, 128).to('cpu').detach().numpy()[0]
+            if nChannels > 1:
+                x_hat = x_hat.reshape(nChannels,128, 128).to('cpu').detach().numpy()[0]
+            else:
+                x_hat = x_hat.to('cpu').detach().numpy().squeeze()
+                
             img[(n-1-i)*w:(n-1-i+1)*w, j*w:(j+1)*w] = x_hat
     plt.figure(figsize = (10,10))
     plt.imshow(img, extent=[*r0, *r1])
