@@ -21,7 +21,7 @@ class MaxClassifier(nn.Module):
                 pred = self(x)
                 scores[i] += (pred == label).item()
 
-        self.threshold = torch.min(thresholds[scores == torch.topk(scores.unique(), 2)[0].min()])
+        self.threshold = torch.min(thresholds[scores == torch.topk(scores.unique(), 2)[0].min()]).item()
     
     def forward(self, x):
         pred = self.model(x)
