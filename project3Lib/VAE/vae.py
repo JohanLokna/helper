@@ -40,8 +40,10 @@ class VariationalEncoder(nn.Module):
         self.fc2 = nn.Linear(f_dim, z_dim)
 
         self.N = torch.distributions.Normal(0, 1)
-        self.N.loc = self.N.loc.cuda() 
-        self.N.scale = self.N.scale.cuda()
+
+        if torch.cuda.is_available():
+            self.N.loc = self.N.loc.cuda() 
+            self.N.scale = self.N.scale.cuda()
         
         self.temp_shape = 0
         
@@ -168,16 +170,18 @@ def plot_reconstructed(autoencoder, dataloader, r0=(-10, 10), r1=(-10, 10), dims
     
     for i, y in enumerate(np.linspace(*r1, n)):
         for j, x in enumerate(np.linspace(*r0, n)):
+
+            new_embed = start_embed.to('cpu').clone().to(device)
             
-            start_embed[:,dims[0]] = start_embed[:,dims[0]] + y
-            start_embed[:,dims[1]] = start_embed[:,dims[1]] + x
-            z = start_embed
+            new_embed[:,dims[0]] = start_embed[:,dims[0]] + y
+            new_embed[:,dims[1]] = start_embed[:,dims[1]] + x
+            z = new_embed
             x_hat = autoencoder.decoder(z)
             if nChannels > 1:
                 x_hat = x_hat.reshape(nChannels,128, 128).to('cpu').detach().numpy()[0]
             else:
                 x_hat = x_hat.to('cpu').detach().numpy().squeeze()
                 
-            img[(n-1-i)*w:(n-1-i+1)*w, j*w:(j+1)*w] = x_hat
+            img[i*w:(i+1)*w, j*w:(j+1)*w] = x_hat
     plt.figure(figsize = (10,10))
     plt.imshow(img, extent=[*r0, *r1])

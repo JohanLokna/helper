@@ -1,5 +1,6 @@
 name: project3
 channels:
+  - pytorch
   - conda-forge
   - defaults
 dependencies:
@@ -18,6 +19,7 @@ dependencies:
   - blosc=1.21.0=h19a0ad4_0
   - bottleneck=1.3.4=py38h080aedc_0
   - brotli=1.0.9=ha925a31_2
+  - brotlipy=0.7.0=py38h2bbff1b_1003
   - bzip2=1.0.8=he774522_0
   - ca-certificates=2022.4.26=haa95532_0
   - captum=0.5.0=pyhd8ed1ab_0
@@ -31,6 +33,8 @@ dependencies:
   - cmd2=2.3.3=py38haa244fe_1
   - colorama=0.4.4=pyhd3eb1b0_0
   - colorlog=6.6.0=py38haa244fe_1
+  - cryptography=37.0.1=py38h21b164f_0
+  - cudatoolkit=11.3.1=h59b6b97_2
   - cycler=0.11.0=pyhd3eb1b0_0
   - cytoolz=0.11.0=py38he774522_0
   - dask-core=2022.2.1=pyhd3eb1b0_0
@@ -47,6 +51,7 @@ dependencies:
   - greenlet=1.1.2=py38h885f38d_2
   - icc_rt=2019.0.0=h0cc432a_1
   - icu=58.2=ha925a31_3
+  - idna=3.3=pyhd3eb1b0_0
   - imagecodecs=2021.8.26=py38ha1f97ea_0
   - imageio=2.9.0=pyhd3eb1b0_0
   - importlib-metadata=4.11.3=py38haa244fe_1
@@ -122,15 +127,19 @@ dependencies:
   - pure_eval=0.2.2=pyhd3eb1b0_0
   - pycparser=2.21=pyhd8ed1ab_0
   - pygments=2.11.2=pyhd3eb1b0_0
+  - pyopenssl=22.0.0=pyhd3eb1b0_0
   - pyparsing=3.0.4=pyhd3eb1b0_0
   - pyperclip=1.8.2=pyhd8ed1ab_2
   - pyqt=5.9.2=py38hd77b12b_6
   - pyreadline3=3.4.1=py38haa244fe_0
   - pyrsistent=0.18.0=py38h196d8e1_0
+  - pysocks=1.7.1=py38haa95532_0
   - python=3.8.13=h6244533_0
   - python-dateutil=2.8.2=pyhd3eb1b0_0
   - python-fastjsonschema=2.15.1=pyhd3eb1b0_0
   - python_abi=3.8=2_cp38
+  - pytorch=1.11.0=py3.8_cuda11.3_cudnn8_0
+  - pytorch-mutex=1.0=cuda
   - pytz=2021.3=pyhd3eb1b0_0
   - pywavelets=1.3.0=py38h2bbff1b_0
   - pywin32=302=py38h2bbff1b_2
@@ -140,6 +149,7 @@ dependencies:
   - qt=5.9.7=vc14h73c81de_0
   - qtconsole=5.3.0=pyhd3eb1b0_0
   - qtpy=2.0.1=pyhd3eb1b0_0
+  - requests=2.27.1=pyhd3eb1b0_0
   - scikit-image=0.19.2=py38hf11a4ad_0
   - scikit-learn=1.0.2=py38hf11a4ad_1
   - scipy=1.7.3=py38h0a974cb_0
@@ -167,12 +177,14 @@ dependencies:
   - traitlets=5.1.1=pyhd3eb1b0_0
   - typing-extensions=4.2.0=hd8ed1ab_1
   - typing_extensions=4.2.0=pyha770c72_1
+  - urllib3=1.26.9=py38haa95532_0
   - vc=14.2=h21ff451_1
   - vs2015_runtime=14.27.29016=h5e58377_2
   - wcwidth=0.2.5=pyh9f0ad1d_2
   - webencodings=0.5.1=py38_1
   - wheel=0.37.1=pyhd3eb1b0_0
   - widgetsnbextension=3.5.2=py38haa95532_0
+  - win_inet_pton=1.1.0=py38haa95532_0
   - wincertstore=0.2=py38haa95532_2
   - winpty=0.4.3=4
   - xz=5.2.5=h8cc25b3_1
@@ -183,9 +195,6 @@ dependencies:
   - zstd=1.4.9=h19a0ad4_0
   - pip:
     - charset-normalizer==2.0.12
-    - idna==3.3
-    - requests==2.27.1
     - torch==1.11.0
     - torchvision==0.12.0
-    - urllib3==1.26.9
-prefix: C:\Users\User\Anaconda3\envs\project_3
+prefix: C:\Users\User\Anaconda3\envs\project3
