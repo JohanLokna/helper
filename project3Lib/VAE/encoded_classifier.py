@@ -9,6 +9,7 @@ import torch.distributions
 import torchvision
 import numpy as np
 import matplotlib.pyplot as plt
+import tqdm
 
 from .vae import *
 
@@ -28,7 +29,7 @@ class Encoder_Classifier(nn.Module):
         
         # Initializing the 2 convolutional layers and 2 full-connected layers for the encoder
 
-        vae_loaded  = VariationalAutoencoder()
+        vae_loaded  = VariationalAutoencoder(imgChannels=imgChannels)
         vae_loaded.load_state_dict(torch.load(vae_path))
         
         self.encoder = vae_loaded.encoder
@@ -129,7 +130,7 @@ class Encoder_Classifier(nn.Module):
                     if(print_statements): print('[{}/{}, {}/{}] total loss: {:.8} | '.format(epoch, epochs, times, len(train_loader), loss.item()))
 
             # Early stopping
-            current_loss, current_acc = self.validation(valid_loader, loss_function)
+            current_loss, current_acc = self.validation(valid_loader)
             if(print_statements): print('The Current Loss:', current_loss, "The Current Acc:", current_acc)
 
             if current_loss > last_loss:
@@ -138,12 +139,14 @@ class Encoder_Classifier(nn.Module):
 
                 if trigger_times >= patience:
                     if(print_statements): print('Early stopping!\nStart to test process.')
+                    if save:
+                        torch.save(self.state_dict(), save)
                     return best_model
 
             else:
                 if(print_statements): print('trigger times: 0')
                 trigger_times = 0
-                best_model = model
+                best_model = self
 
             last_loss = current_loss
 
@@ -177,6 +180,6 @@ class Encoder_Classifier(nn.Module):
         return acc, loss
 
     def predict(self, x):
-        out = self(x.reshape(1, 3, 128, 128))   
+        out = self(x.unsqueeze(0))   
         _,prediction = torch.max(out, dim=1)
         return prediction[0].item(), out
