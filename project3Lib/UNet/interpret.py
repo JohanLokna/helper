@@ -39,7 +39,7 @@ def integrad_unet(base_model, sample, target, label):
 """
     Wrapper class for the UNet model when interpreting it with shap
 """
-class Helper(nn.Module):
+class HelperShap(nn.Module):
 
         def __init__(self, model, mask):
             super().__init__()
@@ -53,7 +53,7 @@ class Helper(nn.Module):
 """
     Function for interpreting the UNet model with Integrated Gradients
 """
-def shaply_unet(base_model, background, sample, target, label):
+def model(base_model, background, sample, target, label):
     mask = (target  == label) & (sample[0] > sample.min())
-    e = shap.DeepExplainer(Helper(base_model, mask), background)
+    e = shap.DeepExplainer(HelperShap(base_model, mask), background)
     return e.shap_values(sample)
