@@ -53,7 +53,7 @@ class HelperShap(nn.Module):
 """
     Function for interpreting the UNet model with Integrated Gradients
 """
-def model(base_model, background, sample, target, label):
+def shap_unet(base_model, background, sample, target, label):
     mask = (target  == label) & (sample[0] > sample.min())
     e = shap.DeepExplainer(HelperShap(base_model, mask), background)
     return e.shap_values(sample)
