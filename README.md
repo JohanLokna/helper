@@ -14,6 +14,8 @@ This dataset contains a mix of samples from the Kaggle datasets [Brain MRI Image
 Further for Transfer learning we use the following larger Kaggel dataset [Br35H :: Brain Tumor Detection 2020](https://www.kaggle.com/datasets/ahmedhamada0/brain-tumor-detection?select=no&sort=votes).
 Add these (our your customized data) to the `/data/images` and `/data/tl_dataset` folder. 
 
+As mentioned in the report, we further filter the provided dataset for duplicates. To filter the dataset, run the script `make_unique.py`.
+
 ### Pyradiomics
 To retrieve train, validation and test set for the [pyradiomics](https://pyradiomics.readthedocs.io/en/latest/) features we provide the function `get_radiomics_dataset()` in `data.py`. The function returns both datasets as numpy arrays.
 ```sh

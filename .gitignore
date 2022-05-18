@@ -1,0 +1,6 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+.ipynb_checkpoints
+__pycache__/
+*.py[cod]
